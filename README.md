@@ -8,7 +8,7 @@ A comprehensive Django REST API backend system for an e-commerce marketplace wit
 ![Admin Dashboard](./media/product_images/s1.png)
 
 ### Customer Portal
-![Customer Portal](./media/product_images/s1.png)
+![Customer Portal](./media/product_images/s2.png)
 
 ## Project Structure
 
