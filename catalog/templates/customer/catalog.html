@@ -1,0 +1,293 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="customer-catalog">
+    <h1>🛍️ Product Catalog</h1>
+    
+    <!-- Search and Filter Section -->
+    <div class="filter-section">
+        <form method="get" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search Products:</label>
+                    <input type="text" name="search" id="search" value="{{ search_query }}" placeholder="Search by name or description">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="category">Category:</label>
+                    <select name="category" id="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="min_price">Min Price:</label>
+                    <input type="number" name="min_price" id="min_price" value="{{ min_price }}" placeholder="0" min="0">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="max_price">Max Price:</label>
+                    <input type="number" name="max_price" id="max_price" value="{{ max_price }}" placeholder="1000" min="0">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sort">Sort By:</label>
+                    <select name="sort" id="sort">
+                        <option value="-created_at" {% if sort_by == "-created_at" %}selected{% endif %}>Newest First</option>
+                        <option value="name" {% if sort_by == "name" %}selected{% endif %}>Name A-Z</option>
+                        <option value="-name" {% if sort_by == "-name" %}selected{% endif %}>Name Z-A</option>
+                        <option value="base_price" {% if sort_by == "base_price" %}selected{% endif %}>Price Low to High</option>
+                        <option value="-base_price" {% if sort_by == "-base_price" %}selected{% endif %}>Price High to Low</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn-primary">Apply Filters</button>
+                    <a href="{% url 'customer:catalog' %}" class="btn-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Product Grid -->
+    {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card">
+                {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-image">
+                {% else %}
+                    <div class="product-image no-image">
+                        <i class="fas fa-image"></i>
+                        <span>No Image</span>
+                    </div>
+                {% endif %}
+                
+                <div class="product-category">{{ product.category.name }}</div>
+                <div class="product-title">{{ product.name }}</div>
+                <div class="product-description">{{ product.description|truncatewords:15 }}</div>
+                
+                <div class="product-price">
+                    {% if product.variants.exists %}
+                        ${{ product.variants.first.final_price|floatformat:2 }}
+                        {% if product.variants.count > 1 %}
+                            - ${{ product.variants.last.final_price|floatformat:2 }}
+                        {% endif %}
+                    {% else %}
+                        ${{ product.base_price|floatformat:2 }}
+                    {% endif %}
+                </div>
+                
+                <div class="product-actions">
+                    <a href="{% url 'customer:product_detail' product.id %}" class="btn-primary">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-products">
+            <h3>No products found</h3>
+            <p>Try adjusting your search criteria or browse all products.</p>
+            <a href="{% url 'customer:catalog' %}" class="btn-primary">View All Products</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.customer-catalog {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.filter-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.filter-form {
+    width: 100%;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 15px;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.product-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.no-image {
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+}
+
+.no-image i {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.product-category {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.product-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.product-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.product-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e74c3c;
+    margin-bottom: 15px;
+}
+
+.product-actions {
+    text-align: center;
+}
+
+.btn-primary {
+    background: #007cba;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #005a87;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.no-products {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-products h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.no-products p {
+    font-size: 16px;
+    margin-bottom: 25px;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+
